@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795798974975,
+   "updated": 1795798978705,
    "items": [
     {
      "id": "p4241",
@@ -18,7 +18,7 @@
      "cat": "12",
      "cn": "Aceite, especias y salsas",
      "t": "https://prod-mercadona.imgix.net/images/3b8cde7b3cb069ee0316029012cf8562.jpg?fit=crop&h=200&w=200",
-     "fav": true
+     "fav": false
     }
    ],
    "store": "mercadona"

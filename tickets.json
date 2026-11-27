@@ -7,13 +7,13 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796980536,
+   "updated": 1795796983218,
    "items": [
     {
      "id": "ijompbj33n",
      "text": "Chicle para Alvaro",
      "qty": 1,
-     "done": false
+     "done": true
     },
     {
      "id": "ilr2rzl0ch",

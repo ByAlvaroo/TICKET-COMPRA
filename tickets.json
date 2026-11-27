@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795802479958,
+   "updated": 1795802511728,
    "items": [
     {
      "id": "p65165",
@@ -66,10 +66,11 @@
      "pid": "11681",
      "text": "Molde de papel Bosque Verde para freidora de aire 20 cm",
      "qty": 1,
-     "done": false,
+     "done": true,
      "cat": "26",
      "cn": "Limpieza y hogar",
-     "t": "https://prod-mercadona.imgix.net/images/179eb41ae05bae2a5c72e79923527467.jpg?fit=crop&h=200&w=200"
+     "t": "https://prod-mercadona.imgix.net/images/179eb41ae05bae2a5c72e79923527467.jpg?fit=crop&h=200&w=200",
+     "doneAt": 1795802511125
     },
     {
      "id": "p14969",

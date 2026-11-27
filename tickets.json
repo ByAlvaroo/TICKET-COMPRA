@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796927366,
+   "updated": 1795796930603,
    "items": [
     {
      "id": "ijompbj33n",
@@ -24,6 +24,12 @@
     {
      "id": "i0t8vxrgwf",
      "text": "Ajo en polvo",
+     "qty": 1,
+     "done": false
+    },
+    {
+     "id": "i5k0r8hjec",
+     "text": "Zumos",
      "qty": 1,
      "done": false
     }

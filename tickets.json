@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795797023667,
+   "updated": 1795797025794,
    "items": [
     {
      "id": "ijompbj33n",
@@ -19,19 +19,19 @@
      "id": "ilr2rzl0ch",
      "text": "Salchichas F.",
      "qty": 1,
-     "done": false
+     "done": true
     },
     {
      "id": "i0t8vxrgwf",
      "text": "Ajo en polvo",
      "qty": 1,
-     "done": false
+     "done": true
     },
     {
      "id": "i5k0r8hjec",
      "text": "Zumos",
      "qty": 1,
-     "done": false
+     "done": true
     },
     {
      "id": "ixxbe0hqs0",

@@ -7,11 +7,17 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796886156,
+   "updated": 1795796905912,
    "items": [
     {
      "id": "ijompbj33n",
      "text": "Chicle para Alvaro",
+     "qty": 1,
+     "done": false
+    },
+    {
+     "id": "ilr2rzl0ch",
+     "text": "Salchichas F.",
      "qty": 1,
      "done": false
     }

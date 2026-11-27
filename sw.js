@@ -1,6 +1,7 @@
 /* ByTicket — service worker: la app se abre al instante y también sin conexión.
    HECHO POR @BYALVARO__ */
-const VERSION = 'byticket-v1';
+const VERSION = 'byticket-v2';
+const IMG = 'byticket-img-v1';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'qr.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-64.png'];
 
@@ -8,7 +9,7 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== IMG).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const req = e.request, url = new URL(req.url);
@@ -16,6 +17,11 @@ self.addEventListener('fetch', e => {
   // Fuentes de Google: primero la caché
   if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
     e.respondWith(caches.open(VERSION).then(c => c.match(req).then(hit => hit || fetch(req).then(r => { c.put(req, r.clone()); return r; }))));
+    return;
+  }
+  // Fotos de productos: caché para que se vean sin conexión en el súper
+  if (/imgix\.net$/.test(url.hostname)) {
+    e.respondWith(caches.open(IMG).then(c => c.match(req).then(hit => hit || fetch(req).then(r => { if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r; }).catch(() => hit))));
     return;
   }
   if (url.origin !== location.origin) return;

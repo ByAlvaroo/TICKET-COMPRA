@@ -1,58 +1,64 @@
 # ByTicket
 
-Listas de la compra con forma de ticket de súper. El ticket crece cada vez que añades un producto, los tachas en rojo con un toque, cada uno lleva un QR que abre esa misma lista y lo puedes descargar como imagen. Todos tus dispositivos ven los mismos tickets y se puede **instalar como app** en el móvil (Chrome o Safari).
+Listas de la compra con forma de ticket, **por comercio** (de momento Mercadona). Eliges productos del catálogo completo por categorías o con el buscador, ajustas la cantidad y aparecen en tu ticket. Todos tus dispositivos ven lo mismo y se puede **instalar como app** en el móvil.
 
 **HECHO POR @BYALVARO__**
 
-## Subirlo a GitHub Pages
+## Qué hace
 
-1. Crea un repositorio nuevo en GitHub, por ejemplo `byticket` (puede ser público o privado*).
-2. Sube **todo** el contenido del zip a la rama `main` (incluida la carpeta `icons/`, `manifest.webmanifest`, `sw.js` y `.nojekyll`).
-3. En el repo ve a **Settings → Pages → Build and deployment**: *Source* = `Deploy from a branch`, *Branch* = `main` / `(root)` y pulsa **Save**.
-4. En un minuto la tienes en `https://byalvaroo.github.io/byticket/`.
+- **Inicio:** eliges comercio (Mercadona; más comercios próximamente).
+- **Categorías y buscador:** todas las categorías y productos de Mercadona, con foto. Pulsa **+** para añadirlo y ajusta la cantidad con las flechas ‹ ›.
+- **Ticket con estilo Mercadona:** verde, agrupado por categorías en el orden de la tienda.
+- **Fijos ⭐:** toca la **foto** de un producto en el ticket. Queda con marco dorado, siempre arriba y **nunca se borra** (los de todas las semanas).
+- **Tachar:** toca el producto. Los tachados se **borran solos** a las 24 h (se cambia en ⚙ Ajustes: al momento, 1 h, 6 h, 12 h, 24 h, 3 días, 1 semana o nunca). Los fijos no se borran: se destachan solos para la próxima compra.
+- **+ Añadir producto que no está en Mercadona:** debajo de la lista, para cosas a mano (`2 velas, papel regalo`).
+- **Cantidad en el ticket:** toca «x 2» para cambiarla.
+- **Borrar:** desliza a la izquierda (móvil) o la ✕ (PC).
+- **Descargar imagen**, **compartir enlace** y QR que abre ese ticket.
+- **Sin conexión:** los cambios se guardan en el móvil y se suben al volver la cobertura.
 
-\* GitHub Pages en repos privados requiere un plan de pago. Si el repo es público, cualquiera con el enlace puede **ver** tus listas, pero solo tú puedes **editarlas** (hace falta tu token).
+## 1. Subirlo a GitHub Pages
 
-## Activar la sincronización (una vez por dispositivo)
+1. Crea un repositorio, por ejemplo `byticket`.
+2. Sube **todo** el contenido del zip a la rama `main`, incluidas las carpetas `.github/`, `scripts/` e `icons/`. En Windows las carpetas que empiezan por punto pueden estar ocultas; si subes arrastrando en la web de GitHub, comprueba que `.github/workflows/catalogo.yml` aparece.
+3. **Settings → Pages:** *Deploy from a branch* → `main` / `(root)` → Save.
+4. En un minuto está en `https://byalvaroo.github.io/byticket/`.
 
-Los tickets se guardan en un archivo `tickets.json` en la rama **`datos`** de tu propio repo (la app crea la rama sola la primera vez). Para que un dispositivo pueda editar necesita un token:
+## 2. Descargar el catálogo de Mercadona (una vez)
+
+El catálogo lo descarga tu propio repo con una GitHub Action:
+
+1. En el repo ve a **Actions**. Si pide activar los workflows, acéptalo.
+2. Elige **«Actualizar catálogo de Mercadona»** → **Run workflow**.
+3. En unos 3-5 minutos se crea `catalog/mercadona.json` con todas las categorías y productos.
+
+Después se actualiza **solo cada lunes**. También puedes lanzarlo desde la app (⚙ Ajustes → *Actualizar catálogo ahora*) si el token tiene permiso de Actions.
+
+El almacén por defecto es `vlc1` (Valencia). Para otra zona cambia `MERCADONA_WH` en `.github/workflows/catalogo.yml` (por ejemplo `mad1` o `bcn1`).
+
+## 3. Sincronización (una vez por dispositivo)
 
 1. Entra en <https://github.com/settings/personal-access-tokens/new>.
-2. *Repository access* → **Only select repositories** → elige `byticket`.
-3. *Permissions* → *Repository permissions* → **Contents: Read and write**.
-4. Genera el token, cópialo y en la app pulsa el engranaje ⚙ → pégalo en **Token** → *Guardar y conectar*.
+2. *Repository access* → **Only select repositories** → `byticket`.
+3. *Permissions* → **Contents: Read and write** y, si quieres actualizar el catálogo desde la app, **Actions: Read and write**.
+4. En la app: ⚙ (o ⋯ → Ajustes en el móvil) → pega el token → *Guardar*.
 
-Repite el paso 4 en el móvil, el iPad, etc. El token solo se guarda en ese navegador. Sin token la app abre en **modo solo lectura**.
+Los tickets se guardan en `tickets.json`, en la rama `datos` de tu repo. Sin token la app abre en modo solo lectura. Si el repo es público, cualquiera con el enlace puede ver las listas, pero solo quien tenga el token puede editarlas.
 
 ## Instalarla en el móvil
 
-- **Android (Chrome):** abre la web → menú ⋯ de la app → *Instalar app en el móvil* (o menú ⋮ de Chrome → *Instalar aplicación*).
-- **iPhone / iPad (Safari):** botón *Compartir* → *Añadir a pantalla de inicio* → *Añadir*.
-- En el PC (Chrome/Edge) aparece un botón de instalar junto al engranaje.
-
-Instalada se abre a pantalla completa con su icono, carga al instante y **funciona sin conexión**: si tachas o añades cosas sin cobertura en el súper, se guardan en el móvil y se suben solas cuando vuelve la conexión.
-
-## Cómo se usa
-
-- **Nuevo ticket**: nombre, tienda (opcional) y nota al pie (opcional).
-- **Añadir productos**: escribe en la impresora. Puedes meter varios a la vez separados por comas, y la cantidad delante o detrás: `2 leche, pan, huevos x12`.
-- **Tachar**: toca un producto y se tacha en rojo; tócalo otra vez para quitarlo.
-- **Borrar un producto**: en el móvil desliza a la izquierda; en el PC, la ✕.
-- **En el móvil** todas las opciones están en el menú ⋯ de arriba a la derecha, para que el ticket se vea limpio.
-- **Descargar imagen**: PNG del ticket con su QR (en móvil/iPad abre el menú de compartir para guardarlo en Fotos).
-- **Copiar enlace / QR**: abre directamente ese ticket (`…/byticket/#id-del-ticket`).
-- **Quitar tachados**, **Editar ticket** y **Eliminar**.
-
-Si dos dispositivos guardan a la vez, la app vuelve a leer el archivo y reaplica tus cambios, así que no se pierde nada. Los demás dispositivos se actualizan cada ~12 segundos y al volver a la pestaña.
+- **Android (Chrome):** menú ⋯ de la app → *Instalar app en el móvil*.
+- **iPhone / iPad (Safari):** *Compartir* → *Añadir a pantalla de inicio*.
 
 ## Archivos
 
 | Archivo | Qué es |
 |---|---|
-| `index.html` | Estructura de la página |
-| `styles.css` | Diseño (impresora + ticket térmico) |
-| `app.js` | Lógica, sincronización con GitHub, imagen del ticket |
-| `manifest.webmanifest`, `sw.js` | Lo que la hace instalable y usable sin conexión |
-| `icons/` | Iconos de la app |
-| `qr.js` | Generador de códigos QR (Kazuhiko Arase, licencia MIT) |
-| `.nojekyll` | Evita que GitHub Pages procese el sitio con Jekyll |
+| `index.html`, `styles.css`, `app.js` | La app |
+| `manifest.webmanifest`, `sw.js`, `icons/` | App instalable y sin conexión |
+| `qr.js` | Generador de QR (Kazuhiko Arase, MIT) |
+| `scripts/actualizar-catalogo.mjs` | Descarga el catálogo de Mercadona |
+| `.github/workflows/catalogo.yml` | Lo ejecuta en GitHub cada semana |
+| `catalog/mercadona.json` | El catálogo (lo crea la Action) |
+
+ByTicket es un proyecto personal sin relación con Mercadona. Los nombres y fotos de productos se leen de su tienda online pública.

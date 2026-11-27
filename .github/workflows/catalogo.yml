@@ -1,0 +1,40 @@
+name: Actualizar catálogo de Mercadona
+
+on:
+  workflow_dispatch:          # botón "Run workflow" (o desde la app)
+  schedule:
+    - cron: '17 4 * * 1'      # cada lunes a las 5:17 (hora peninsular)
+  push:
+    paths:
+      - 'scripts/actualizar-catalogo.mjs'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: catalogo
+  cancel-in-progress: false
+
+jobs:
+  catalogo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Descargar catálogo
+        run: node scripts/actualizar-catalogo.mjs
+        env:
+          MERCADONA_WH: vlc1
+      - name: Guardar cambios
+        run: |
+          git config user.name "ByTicket bot"
+          git config user.email "byticket-bot@users.noreply.github.com"
+          git add catalog/mercadona.json
+          if git diff --cached --quiet; then
+            echo "El catálogo no ha cambiado."
+          else
+            git commit -m "Catálogo de Mercadona actualizado"
+            git push
+          fi

@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796946302,
+   "updated": 1795796950003,
    "items": [
     {
      "id": "ijompbj33n",
@@ -43,6 +43,12 @@
      "id": "il40a20vif",
      "text": "Guantes de cocina",
      "qty": 1,
+     "done": false
+    },
+    {
+     "id": "ijvimmryd8",
+     "text": "Pan",
+     "qty": 3,
      "done": false
     }
    ]

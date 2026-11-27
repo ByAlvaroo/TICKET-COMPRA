@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795799312482,
+   "updated": 1795799320664,
    "items": [
     {
      "id": "p65165",
@@ -39,6 +39,16 @@
      "cat": "12",
      "cn": "Aceite, especias y salsas",
      "t": "https://prod-mercadona.imgix.net/images/10f7ce7fe35de8f5b595db38a95a9cc5.jpg?fit=crop&h=200&w=200"
+    },
+    {
+     "id": "p39130",
+     "pid": "39130",
+     "text": "Zumo de piña y uva Hacendado",
+     "qty": 1,
+     "done": false,
+     "cat": "10",
+     "cn": "Zumos",
+     "t": "https://prod-mercadona.imgix.net/images/ed323a439124a96f84da691c64cc48af.jpg?fit=crop&h=200&w=200"
     }
    ],
    "store": "mercadona"

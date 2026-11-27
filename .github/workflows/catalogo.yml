@@ -26,7 +26,7 @@ jobs:
       - name: Descargar catálogo
         run: node scripts/actualizar-catalogo.mjs
         env:
-          MERCADONA_WH: vlc1
+          MERCADONA_WH: mur1
       - name: Guardar cambios
         run: |
           git config user.name "ByTicket bot"

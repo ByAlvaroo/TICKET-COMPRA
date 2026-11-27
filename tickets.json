@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795799360151,
+   "updated": 1795799362068,
    "items": [
     {
      "id": "p65165",
@@ -54,7 +54,7 @@
      "id": "p33581",
      "pid": "33581",
      "text": "Cuquis Hacendado",
-     "qty": 1,
+     "qty": 2,
      "done": false,
      "cat": "15",
      "cn": "Aperitivos",

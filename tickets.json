@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795800649825,
+   "updated": 1795800651344,
    "items": [
     {
      "id": "p65165",
@@ -49,7 +49,7 @@
      "cat": "10",
      "cn": "Zumos",
      "t": "https://prod-mercadona.imgix.net/images/ed323a439124a96f84da691c64cc48af.jpg?fit=crop&h=200&w=200",
-     "fav": true
+     "fav": false
     },
     {
      "id": "p33581",

@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796905912,
+   "updated": 1795796917111,
    "items": [
     {
      "id": "ijompbj33n",
@@ -18,6 +18,12 @@
     {
      "id": "ilr2rzl0ch",
      "text": "Salchichas F.",
+     "qty": 1,
+     "done": false
+    },
+    {
+     "id": "is9zs298zk",
+     "text": "TOMATES CHERRY",
      "qty": 1,
      "done": false
     }

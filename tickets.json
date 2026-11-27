@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795801019653,
+   "updated": 1795802401524,
    "items": [
     {
      "id": "p65165",
@@ -96,10 +96,11 @@
      "pid": "79407",
      "text": "Discos desmaquillantes Deliplus redondos algodón 100%",
      "qty": 1,
-     "done": false,
+     "done": true,
      "cat": "20",
      "cn": "Cuidado facial y corporal",
-     "t": "https://prod-mercadona.imgix.net/images/c689ec4c122804754dcfa35b153b1362.jpg?fit=crop&h=200&w=200"
+     "t": "https://prod-mercadona.imgix.net/images/c689ec4c122804754dcfa35b153b1362.jpg?fit=crop&h=200&w=200",
+     "doneAt": 1795802400910
     }
    ],
    "store": "mercadona"

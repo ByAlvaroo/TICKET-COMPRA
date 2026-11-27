@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795799043067,
+   "updated": 1795799054012,
    "items": [
     {
      "id": "p4241",
@@ -29,6 +29,16 @@
      "cat": "9",
      "cn": "Azúcar, caramelos y chocolate",
      "t": "https://prod-mercadona.imgix.net/images/0b8b1fd18173544070ec5422c5f5c7bb.jpg?fit=crop&h=200&w=200"
+    },
+    {
+     "id": "p4717",
+     "pid": "4717",
+     "text": "Aceite de oliva virgen extra Hacendado",
+     "qty": 1,
+     "done": false,
+     "cat": "12",
+     "cn": "Aceite, especias y salsas",
+     "t": "https://prod-mercadona.imgix.net/images/bda0f6a8c3a5f96a424b98c0df93f2e8.jpg?fit=crop&h=200&w=200"
     }
    ],
    "store": "mercadona"

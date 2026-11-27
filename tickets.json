@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795799379076,
+   "updated": 1795799459029,
    "items": [
     {
      "id": "p65165",
@@ -69,6 +69,16 @@
      "cat": "26",
      "cn": "Limpieza y hogar",
      "t": "https://prod-mercadona.imgix.net/images/179eb41ae05bae2a5c72e79923527467.jpg?fit=crop&h=200&w=200"
+    },
+    {
+     "id": "p14969",
+     "pid": "14969",
+     "text": "Guantes de látex Bosque Verde talla pequeña-mediana",
+     "qty": 1,
+     "done": false,
+     "cat": "26",
+     "cn": "Limpieza y hogar",
+     "t": "https://prod-mercadona.imgix.net/images/171af63ee8eb16206886fcb9f824eea1.jpg?fit=crop&h=200&w=200"
     }
    ],
    "store": "mercadona"

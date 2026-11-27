@@ -7,13 +7,13 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795798932656,
+   "updated": 1795798948557,
    "items": [
     {
      "id": "p4241",
      "pid": "4241",
      "text": "Aceite de oliva 0,4º Hacendado",
-     "qty": 1,
+     "qty": 4,
      "done": false,
      "cat": "12",
      "cn": "Aceite, especias y salsas",

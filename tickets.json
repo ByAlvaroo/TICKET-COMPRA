@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796940168,
+   "updated": 1795796946302,
    "items": [
     {
      "id": "ijompbj33n",
@@ -36,6 +36,12 @@
     {
      "id": "ixxbe0hqs0",
      "text": "Papeles AIRFLY",
+     "qty": 1,
+     "done": false
+    },
+    {
+     "id": "il40a20vif",
+     "text": "Guantes de cocina",
      "qty": 1,
      "done": false
     }

@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795799285857,
+   "updated": 1795799287875,
    "items": [
     {
      "id": "p65165",
@@ -23,7 +23,7 @@
      "id": "p53141",
      "pid": "53141",
      "text": "Salchichas cocidas estilo Frankfurt Hacendado de pollo y cerdo sabor ahumado",
-     "qty": 1,
+     "qty": 2,
      "done": false,
      "cat": "4",
      "cn": "Charcutería y quesos",

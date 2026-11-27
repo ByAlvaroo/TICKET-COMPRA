@@ -1,5 +1,6 @@
 /*
   VOICE   cálido y de andar por casa, como un ticket de súper
+  APP     ByTicket — instalable (PWA)
   IDEA    una impresora de tickets: escribes arriba y el papel sale y crece
   PICTURE la impresora oscura con el ticket térmico colgando
   COLOUR  fondo malva-gris, impresora casi negra, papel blanco, tachón rojo
@@ -39,7 +40,7 @@ svg{display:block}
 /* ---------- barra superior ---------- */
 .top{display:flex;align-items:center;gap:10px;max-width:980px;margin:0 auto;padding:16px max(4vw,14px) 6px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:850;font-stretch:80%;font-size:22px;letter-spacing:-.01em;margin-right:auto}
-.brand svg{width:30px;height:30px;color:var(--ink)}
+.brand img{width:34px;height:34px;display:block}
 .sync{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--chip);font-size:13px;font-weight:600;color:var(--muted)}
 .sync i{width:8px;height:8px;border-radius:50%;background:#9a939d}
 .sync[data-s=ok] i{background:#2fa36b}
@@ -105,7 +106,7 @@ svg{display:block}
 .t-date{text-align:center;font-size:13.5px}
 .dash{border:0;border-top:2px dashed #c4c0c0;margin:16px 0}
 .items{list-style:none;margin:0;padding:0}
-.item{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto 30px;align-items:center;gap:10px;padding:6px 0;cursor:pointer;user-select:none}
+.item{position:relative;touch-action:pan-y manipulation;-webkit-touch-callout:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto 30px;align-items:center;gap:10px;padding:6px 0;cursor:pointer;user-select:none}
 .item.new{animation:feed .35s ease-out}
 .item .code{font-size:12.5px;color:#666}
 .item .txt{overflow-wrap:anywhere}
@@ -169,14 +170,68 @@ dialog input:focus{outline:2px solid var(--pink);border-color:transparent}
   background:var(--printer);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:600;transition:.25s;max-width:calc(100vw - 30px);text-align:center;z-index:50}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
-@media (max-width:520px){
-  .brand span{font-size:19px}
-  .sync span{display:none}
-  .sync{width:40px;justify-content:center;padding:0}
-  .paper-wrap{width:92%}
-  .ticket{padding:30px 16px 18px;font-size:14px}
-  .actions button{flex:1 1 calc(50% - 8px);justify-content:center}
-  .actions button.danger{flex-basis:100%}
-  .actions button{font-size:13.5px;white-space:nowrap;padding:0 10px}
-}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- extras: menú, instalar, deslizar ---------- */
+.mob{display:none}
+button,.item,.tab{touch-action:manipulation}
+.banner .x{background:transparent;color:inherit;padding:4px;width:30px;height:30px;display:grid;place-items:center}
+.banner .x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.item.swipe-del{color:var(--red)}
+.item.swipe-del .del{opacity:1;color:var(--red)}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;font-size:15px}
+.steps .inl{display:inline-block;width:20px;height:20px;vertical-align:-4px;fill:none;stroke:#0a84ff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tip{margin:22px 0 0;font-size:12.5px;color:var(--muted);text-align:center}
+#moreBtn svg{fill:currentColor;stroke:none}
+
+dialog.sheet{margin:auto auto 0;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:8px 14px calc(14px + env(safe-area-inset-bottom));animation:up .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(100%)}}
+.grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
+.sheet-head{display:flex;flex-direction:column;padding:0 6px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.sheet-head b{font-size:18px;font-stretch:85%}
+.sheet-head span{font-size:12.5px;color:var(--muted)}
+.sheet-list{display:flex;flex-direction:column}
+.sheet-list button{display:flex;align-items:center;gap:14px;height:52px;padding:0 8px;border:0;background:transparent;border-radius:12px;font-size:16px;font-weight:600;text-align:left}
+.sheet-list button:active{background:var(--bg2)}
+.sheet-list button:disabled{opacity:.4}
+.sheet-list svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sheet-list .danger{color:var(--red)}
+.sheet-list .hl{color:#0a7d55}
+dialog.sheet form{padding:0}
+.sheet-close{width:100%;height:50px;margin-top:8px;border-radius:14px;border:0;background:var(--bg2);font-weight:700;font-size:16px}
+
+/* ---------- móvil: ticket protagonista, sin botonera ---------- */
+@media (max-width:600px){
+  .desk{display:none!important}
+  .mob{display:block}
+  #moreBtn.mob{display:grid}
+  .top{padding:10px 14px 2px;gap:8px}
+  .brand{font-size:21px;gap:8px}
+  .brand img{width:30px;height:30px}
+  .sync{width:36px;height:36px;justify-content:center;padding:0;border:0;background:transparent}
+  .sync span{display:none}
+  .sync i{width:10px;height:10px}
+  .icon{border:0;background:transparent;width:42px;height:42px}
+  .icon svg{width:24px;height:24px}
+  .tabs{padding:6px 14px 10px;gap:6px}
+  .tab{height:38px;padding:0 12px;font-size:14.5px;border-radius:11px}
+  .banner{margin:0 12px 8px;font-size:13px}
+  .stage{padding:4px 8px 18px}
+  .printer{width:100%}
+  .printer-body{position:sticky;top:env(safe-area-inset-top);padding:10px 12px 24px;border-radius:18px 18px 12px 12px}
+  .printer-top{margin-bottom:8px}
+  .add input{height:46px}
+  .add button{width:46px;height:46px}
+  .slot{bottom:8px}
+  .paper-wrap{width:93%;margin-top:-18px}
+  .ticket{padding:30px 16px 18px;font-size:14.5px}
+  .item{min-height:46px;padding:4px 0;gap:8px}
+  .item{grid-template-columns:auto minmax(0,1fr) auto}
+  .item .del{display:none}
+  .item::after{right:-4px}
+  .item .code{font-size:11.5px}
+  .t-name{padding:7px 12px}
+  .qr{width:112px;height:112px}
+  .credit{padding:4px 0 calc(22px + env(safe-area-inset-bottom))}
+}
+@media (display-mode:standalone){ .top{padding-top:calc(10px + 2px)} }

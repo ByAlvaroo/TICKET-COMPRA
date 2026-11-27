@@ -4,8 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d1b20">
-<title>Ticket Supremo</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M14 4h36v52l-6-4-6 4-6-4-6 4-6-4-6 4z' fill='%23fff' stroke='%23222' stroke-width='3'/%3E%3Cpath d='M21 18h22M21 27h22M21 36h14' stroke='%23c1121f' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="description" content="Listas de la compra con forma de ticket, sincronizadas en todos tus dispositivos.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ByTicket">
+<title>ByTicket</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -14,12 +22,18 @@
 <body>
 <header class="top">
   <div class="brand">
-    <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 4h36v52l-6-4-6 4-6-4-6 4-6-4-6 4z" fill="#fff" stroke="currentColor" stroke-width="3"/><path d="M21 18h22M21 27h22M21 36h14" stroke="#e5383b" stroke-width="4" stroke-linecap="round"/></svg>
-    <span>Ticket Supremo</span>
+    <img src="icons/icon.svg" alt="" width="34" height="34">
+    <span>ByTicket</span>
   </div>
   <button class="sync" id="syncBtn" type="button" title="Estado de sincronización"><i></i><span id="syncText">Cargando…</span></button>
-  <button class="icon" id="settingsBtn" type="button" aria-label="Ajustes de sincronización">
+  <button class="icon desk" id="installBtn" type="button" aria-label="Instalar la app" title="Instalar la app" hidden>
+    <svg viewBox="0 0 24 24"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>
+  </button>
+  <button class="icon desk" id="settingsBtn" type="button" aria-label="Ajustes de sincronización">
     <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+  </button>
+  <button class="icon mob" id="moreBtn" type="button" aria-label="Menú">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
   </button>
 </header>
 
@@ -45,9 +59,10 @@
     <div class="paper-wrap">
       <article class="ticket" id="ticket"></article>
     </div>
+    <p class="tip mob">Toca para tachar · desliza a la izquierda para borrar</p>
   </section>
 
-  <div class="actions" id="actions">
+  <div class="actions desk" id="actions">
     <button type="button" data-act="download"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>Descargar imagen</button>
     <button type="button" data-act="link"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Copiar enlace</button>
     <button type="button" data-act="edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>Editar ticket</button>
@@ -65,6 +80,22 @@
 
 <footer class="credit">HECHO POR @BYALVARO__</footer>
 
+<!-- Menú del móvil -->
+<dialog id="sheet" class="sheet">
+  <div class="grab"></div>
+  <div class="sheet-head"><b id="sheetTitle">ByTicket</b><span id="sheetSync"></span></div>
+  <div class="sheet-list">
+    <button type="button" data-act="download" data-need="ticket"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>Descargar imagen</button>
+    <button type="button" data-act="link" data-need="ticket"><svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></svg>Compartir enlace</button>
+    <button type="button" data-act="edit" data-need="ticket"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>Editar ticket</button>
+    <button type="button" data-act="clear" data-need="ticket"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>Quitar tachados</button>
+    <button type="button" data-act="install" class="hl"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M12 7v7m0 0-3-3m3 3 3-3"/></svg>Instalar app en el móvil</button>
+    <button type="button" data-act="settings"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/></svg>Sincronización</button>
+    <button type="button" data-act="delete" data-need="ticket" class="danger"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>Eliminar ticket</button>
+  </div>
+  <form method="dialog"><button class="sheet-close">Cerrar</button></form>
+</dialog>
+
 <!-- Diálogo: crear / editar ticket -->
 <dialog id="ticketDlg">
   <form method="dialog" id="ticketForm">
@@ -79,18 +110,50 @@
   </form>
 </dialog>
 
+<!-- Diálogo: confirmar -->
+<dialog id="confirmDlg">
+  <form method="dialog" id="confirmForm">
+    <h3 id="confirmTitle">¿Seguro?</h3>
+    <p class="hint" id="confirmText"></p>
+    <div class="dlg-btns">
+      <button value="cancel" type="button" data-close>Cancelar</button>
+      <button value="ok" class="primary" id="confirmOk">Aceptar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Diálogo: instalar -->
+<dialog id="installDlg">
+  <form method="dialog">
+    <h3>Instalar ByTicket</h3>
+    <ol class="steps" id="installIOS">
+      <li>Abre esta página en <b>Safari</b>.</li>
+      <li>Toca el botón <b>Compartir</b> <svg class="inl" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/></svg> de la barra.</li>
+      <li>Elige <b>Añadir a pantalla de inicio</b> <svg class="inl" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>.</li>
+      <li>Pulsa <b>Añadir</b>. Ya la tienes como una app más.</li>
+    </ol>
+    <ol class="steps" id="installAndroid">
+      <li>Abre esta página en <b>Google Chrome</b>.</li>
+      <li>Toca el menú <b>⋮</b> de arriba a la derecha.</li>
+      <li>Elige <b>Instalar aplicación</b> o <b>Añadir a pantalla de inicio</b>.</li>
+      <li>Confirma con <b>Instalar</b>.</li>
+    </ol>
+    <div class="dlg-btns"><button value="ok" class="primary">Entendido</button></div>
+  </form>
+</dialog>
+
 <!-- Diálogo: ajustes de sincronización -->
 <dialog id="settingsDlg">
   <form method="dialog" id="settingsForm">
     <h3>Sincronización con GitHub</h3>
     <p class="hint">Los tickets se guardan en <b>tickets.json</b> dentro de tu repositorio (rama <b>datos</b>). Así todos tus dispositivos ven lo mismo.</p>
     <div class="grid2">
-      <label>Usuario<input name="owner" placeholder="ByAlvaroo" required></label>
-      <label>Repositorio<input name="repo" placeholder="ticket-supremo" required></label>
+      <label>Usuario<input name="owner" placeholder="ByAlvaroo" required autocapitalize="off"></label>
+      <label>Repositorio<input name="repo" placeholder="byticket" required autocapitalize="off"></label>
     </div>
-    <label>Rama de datos<input name="branch" placeholder="datos"></label>
+    <label>Rama de datos<input name="branch" placeholder="datos" autocapitalize="off"></label>
     <label>Token de GitHub <small>(solo en este dispositivo)</small>
-      <input name="token" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+      <input name="token" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false" autocapitalize="off">
     </label>
     <p class="hint">Crea un token <i>fine-grained</i> en <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> con acceso <b>solo a este repositorio</b> y permiso <b>Contents: Read and write</b>. Sin token puedes ver los tickets pero no editarlos.</p>
     <p class="test" id="testMsg"></p>

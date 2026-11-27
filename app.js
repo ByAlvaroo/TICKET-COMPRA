@@ -1,5 +1,5 @@
-/* Ticket Supremo — listas de la compra en forma de ticket, sincronizadas con GitHub.
-   HECHO POR @BYALVARO__ */
+/* ByTicket — listas de la compra en forma de ticket, sincronizadas con GitHub.
+   App instalable (PWA). HECHO POR @BYALVARO__ */
 {
 const $ = s => document.querySelector(s);
 const LS = {
@@ -11,6 +11,8 @@ const FILE = 'tickets.json';
 const uid = p => p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
 const emptyDoc = () => ({ version: 1, tickets: [] });
 const clone = o => JSON.parse(JSON.stringify(o));
+const isMobile = () => matchMedia('(max-width: 600px)').matches;
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
 
 /* ---------------- configuración ---------------- */
 function detectRepo() {
@@ -18,26 +20,48 @@ function detectRepo() {
   if (!h.endsWith('.github.io')) return {};
   const owner = h.split('.')[0];
   const seg = location.pathname.split('/').filter(Boolean)[0];
-  return { owner, repo: seg || h };
+  return { owner, repo: seg && !seg.includes('.') ? seg : h };
 }
 let cfg = Object.assign({ branch: 'datos' }, detectRepo(), LS.get('ts.cfg', {}));
 const mode = () => !(cfg.owner && cfg.repo) ? 'local' : cfg.token ? 'rw' : 'ro';
+const cacheKey = () => `ts.cache.${cfg.owner}/${cfg.repo}`.toLowerCase();
+const pendKey = () => `ts.pending.${cfg.owner}/${cfg.repo}`.toLowerCase();
 
 /* ---------------- estado ---------------- */
 let remote = emptyDoc();      // última versión confirmada
 let sha = null, etag = null;  // del tickets.json en GitHub
-let pending = [];             // operaciones aún no guardadas
-let flushing = false, flushTimer = null, loaded = false;
+let pending = [];             // operaciones aún no guardadas ({t, a}) — se guardan en el dispositivo
+let flushing = false, flushTimer = null, loaded = false, offline = false;
 let current = LS.get('ts.cur', null);
 const seen = new Set();       // ids de productos ya pintados (para animar solo los nuevos)
 
-const view = () => pending.reduce((d, op) => (op(d), d), clone(remote));
+/* ---------------- operaciones (serializables, para poder guardarlas sin conexión) ---------------- */
+const findT = (d, id) => d.tickets.find(t => t.id === id);
+const touch = t => { if (t) t.updated = Date.now(); };
+const OPS = {
+  addTicket: (d, t) => { if (!findT(d, t.id)) d.tickets.push(clone(t)); },
+  editTicket: (d, id, f) => { const t = findT(d, id); if (t) { Object.assign(t, f); touch(t); } },
+  delTicket: (d, id) => { d.tickets = d.tickets.filter(t => t.id !== id); },
+  addItems: (d, id, items) => { const t = findT(d, id); if (t) { items.forEach(i => { if (!t.items.some(x => x.id === i.id)) t.items.push(clone(i)); }); touch(t); } },
+  setDone: (d, id, iid, v) => { const t = findT(d, id), i = t?.items.find(x => x.id === iid); if (i) { i.done = v; touch(t); } },
+  delItem: (d, id, iid) => { const t = findT(d, id); if (t) { t.items = t.items.filter(x => x.id !== iid); touch(t); } },
+  clearDone: (d, id) => { const t = findT(d, id); if (t) { t.items = t.items.filter(x => !x.done); touch(t); } }
+};
+const applyOp = (d, op) => { try { OPS[op.t] && OPS[op.t](d, ...op.a); } catch {} return d; };
+const view = () => pending.reduce(applyOp, clone(remote));
+const savePending = () => LS.set(pendKey(), pending);
+const saveCache = () => LS.set(cacheKey(), { doc: remote, sha });
 
 /* ---------------- GitHub API ---------------- */
 async function gh(path, opts = {}) {
   const headers = { Accept: 'application/vnd.github+json', ...(opts.headers || {}) };
   if (cfg.token) headers.Authorization = 'Bearer ' + cfg.token;
-  return fetch('https://api.github.com' + path, { ...opts, headers, cache: 'no-store' });
+  try {
+    return await fetch('https://api.github.com' + path, { ...opts, headers, cache: 'no-store' });
+  } catch {
+    const e = new Error('Sin conexión: los cambios se guardan en el móvil y se subirán al volver');
+    e.offline = true; throw e;
+  }
 }
 const repoPath = () => `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
 const b64enc = str => { const b = new TextEncoder().encode(str); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
@@ -55,7 +79,6 @@ async function fetchRemote(useEtag) {
     useEtag && etag ? { headers: { 'If-None-Match': etag } } : {});
   if (r.status === 304) return null;
   if (r.status === 404) {
-    // Puede ser que aún no exista el archivo/rama, o que el repo no exista
     const rr = await gh(repoPath());
     if (!rr.ok) throw new Error(errText(rr));
     return { doc: emptyDoc(), sha: null, etag: null };
@@ -89,31 +112,34 @@ async function putRemote(doc, curSha) {
 }
 
 /* ---------------- guardar cambios ---------------- */
-function mutate(op) {
+function mutate(t, ...a) {
   if (mode() === 'ro') { toast('Modo solo lectura: añade tu token en Ajustes'); return; }
-  pending.push(op);
+  pending.push({ t, a });
   render();
   if (mode() === 'local') { remote = view(); pending = []; LS.set('ts.local', remote); setSync('local'); return; }
+  savePending();
+  if (offline) { setSync('off'); return; }
   setSync('busy');
   clearTimeout(flushTimer);
-  flushTimer = setTimeout(flush, 500); // agrupa clics rápidos en un solo guardado
+  flushTimer = setTimeout(flush, 500); // agrupa toques rápidos en un solo guardado
 }
 
 async function flush() {
-  if (flushing || !pending.length) return;
+  if (flushing || !pending.length || mode() !== 'rw') return;
   clearTimeout(flushTimer); flushTimer = null;
   flushing = true; setSync('busy');
   const batch = pending.slice();
-  let ok = false;
+  let ok = false, wasOffline = false;
   try {
     let base = { doc: remote, sha };
     for (let attempt = 0; attempt < 5 && !ok; attempt++) {
-      const next = batch.reduce((d, op) => (op(d), d), clone(base.doc));
+      const next = batch.reduce(applyOp, clone(base.doc));
       const r = await putRemote(next, base.sha);
       if (r.ok) {
         const j = await r.json();
         remote = next; sha = j.content.sha; etag = null;
         pending = pending.slice(batch.length);
+        savePending(); saveCache();
         ok = true; break;
       }
       const msg = (await r.json().catch(() => ({}))).message || '';
@@ -122,13 +148,15 @@ async function flush() {
       throw new Error(errText(r));
     }
     if (!ok) throw new Error('No se pudo guardar; reintentando…');
+    offline = false;
     setSync(pending.length ? 'busy' : 'ok');
   } catch (e) {
-    setSync('err', e.message);
+    wasOffline = !!e.offline; offline = wasOffline;
+    setSync(wasOffline ? 'off' : 'err', e.message);
   } finally {
     flushing = false;
     render();
-    if (pending.length) { clearTimeout(flushTimer); flushTimer = setTimeout(flush, ok ? 300 : 8000); }
+    if (pending.length && !wasOffline) { clearTimeout(flushTimer); flushTimer = setTimeout(flush, ok ? 300 : 8000); }
   }
 }
 
@@ -136,9 +164,11 @@ async function pull(useEtag = true) {
   if (mode() === 'local' || flushing) return;
   try {
     const res = await fetchRemote(useEtag);
-    if (res) { remote = res.doc; sha = res.sha; etag = res.etag; render(); }
-    if (!pending.length) setSync(mode() === 'ro' ? 'ro' : 'ok');
-  } catch (e) { setSync('err', e.message); }
+    offline = false;
+    if (res) { remote = res.doc; sha = res.sha; etag = res.etag; saveCache(); }
+    if (pending.length && mode() === 'rw') flush();
+    else setSync(mode() === 'ro' ? 'ro' : 'ok');
+  } catch (e) { offline = !!e.offline; setSync(offline ? 'off' : 'err', e.message); }
   loaded = true; render();
 }
 
@@ -148,20 +178,9 @@ function startPolling() {
   if (mode() === 'local') return;
   pollTimer = setInterval(() => { if (!document.hidden && !pending.length) pull(true); }, mode() === 'rw' ? 12000 : 60000);
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !pending.length) pull(true); });
-
-/* ---------------- operaciones ---------------- */
-const findT = (d, id) => d.tickets.find(t => t.id === id);
-const touch = t => { t.updated = Date.now(); };
-const ops = {
-  addTicket: t => d => { if (!findT(d, t.id)) d.tickets.push(t); },
-  editTicket: (id, f) => d => { const t = findT(d, id); if (t) { Object.assign(t, f); touch(t); } },
-  delTicket: id => d => { d.tickets = d.tickets.filter(t => t.id !== id); },
-  addItems: (id, items) => d => { const t = findT(d, id); if (t) { items.forEach(i => { if (!t.items.some(x => x.id === i.id)) t.items.push(i); }); touch(t); } },
-  setDone: (id, iid, v) => d => { const i = findT(d, id)?.items.find(x => x.id === iid); if (i) { i.done = v; touch(findT(d, id)); } },
-  delItem: (id, iid) => d => { const t = findT(d, id); if (t) { t.items = t.items.filter(x => x.id !== iid); touch(t); } },
-  clearDone: id => d => { const t = findT(d, id); if (t) { t.items = t.items.filter(x => !x.done); touch(t); } }
-};
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pending.length ? flush() : pull(true); });
+window.addEventListener('online', () => { offline = false; pending.length ? flush() : pull(false); });
+window.addEventListener('offline', () => { if (mode() !== 'local') { offline = true; setSync('off'); } });
 
 function parseItems(raw) {
   return raw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).map(s => {
@@ -181,7 +200,8 @@ const fTime = ts => { const d = new Date(ts); return `${p2(d.getHours())}:${p2(d
 const hash = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const code = (i, it) => `${p2(i + 1)}-${String(hash(it.id) % 1000).padStart(3, '0')}`;
 const ticketNo = t => String(hash(t.id) % 10000000).padStart(7, '0');
-const ticketUrl = t => location.origin + location.pathname + '#' + t.id;
+const baseUrl = () => location.origin + location.pathname;
+const ticketUrl = t => baseUrl() + '#' + t.id;
 const stats = t => {
   const n = t.items.length, done = t.items.filter(i => i.done).length;
   return { n, done, units: t.items.reduce((a, i) => a + (i.qty || 1), 0), complete: n > 0 && done === n };
@@ -214,26 +234,30 @@ function render() {
     const b = el('button', 'tab'); b.type = 'button';
     b.setAttribute('aria-current', t.id === current);
     b.append(el('span', '', t.name || 'Ticket'), el('b', '', String(t.items.filter(i => !i.done).length)));
-    b.onclick = () => { current = t.id; history.replaceState(null, '', '#' + t.id); render(); };
+    b.onclick = () => { current = t.id; history.replaceState(null, '', '#' + t.id); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
     tabs.append(b);
   });
   if (m !== 'ro') {
     const nb = el('button', 'tab new'); nb.type = 'button';
     nb.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
-    nb.append(el('span', '', 'Nuevo ticket'));
+    nb.append(el('span', '', 'Nuevo'));
     nb.onclick = () => openTicketDlg(null);
     tabs.append(nb);
   }
-  tabs.querySelector('[aria-current=true]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (lastTab !== current) {
+    lastTab = current;
+    const at = tabs.querySelector('[aria-current=true]');
+    if (at) { const l = at.offsetLeft - 14, r = at.offsetLeft + at.offsetWidth + 14; if (l < tabs.scrollLeft) tabs.scrollLeft = l; else if (r > tabs.scrollLeft + tabs.clientWidth) tabs.scrollLeft = r - tabs.clientWidth; }
+  }
 
   // banner
-  const bn = $('#banner');
-  if (m === 'local') showBanner('Modo local: los tickets solo se guardan en este dispositivo. Súbelo a GitHub Pages para sincronizar.', 'Ajustes');
-  else if (m === 'ro') showBanner('Modo solo lectura. Añade tu token de GitHub para poder editar desde este dispositivo.', 'Añadir token');
-  else bn.hidden = true;
+  if (m === 'local') showBanner('Modo local: los tickets solo se guardan en este dispositivo. Súbelo a GitHub Pages para sincronizar.', 'Ajustes', openSettings);
+  else if (m === 'ro') showBanner('Modo solo lectura. Añade tu token de GitHub para poder editar desde este dispositivo.', 'Añadir token', openSettings);
+  else $('#banner').hidden = true;
 
   const t = findT(d, current);
   const has = !!t;
+  document.body.classList.toggle('has-ticket', has);
   $('#printer').hidden = !has; $('#actions').hidden = !has;
   $('#empty').hidden = has || (!loaded && m !== 'local');
   $('#emptyNew').hidden = m === 'ro';
@@ -244,13 +268,18 @@ function render() {
   if (has) renderTicket(t);
 }
 
-function showBanner(text, btn) {
+function showBanner(text, btn, fn, closable) {
   const bn = $('#banner'); bn.hidden = false; bn.textContent = '';
-  const b = el('button', '', btn); b.type = 'button'; b.onclick = openSettings;
+  const b = el('button', '', btn); b.type = 'button'; b.onclick = fn;
   bn.append(el('span', '', text), b);
+  if (closable) {
+    const x = el('button', 'x'); x.type = 'button'; x.setAttribute('aria-label', 'Cerrar'); x.innerHTML = XSVG;
+    x.onclick = () => { LS.set('ts.noInstallHint', 1); bn.hidden = true; };
+    bn.append(x);
+  }
 }
 
-let builtFor = null;
+let builtFor = null, lastTab = null;
 function renderTicket(t) {
   const tk = $('#ticket');
   if (builtFor !== t.id) {
@@ -287,7 +316,7 @@ function renderTicket(t) {
   k('state').textContent = s.complete ? 'COMPLETADO' : s.n ? 'PENDIENTE' : 'VACÍO';
   k('inv').textContent = 'INV. ' + ticketNo(t).slice(1);
   k('upd').textContent = 'ACT. ' + fTime(t.updated || t.created || Date.now());
-  k('note').textContent = t.note || 'Gracias por su visita. Escanea el código para abrir esta lista en cualquier dispositivo.';
+  k('note').textContent = t.note || 'Escanea el código para abrir esta lista en cualquier dispositivo.';
   k('none').hidden = s.n > 0;
   const url = ticketUrl(t);
   if (k('qr').dataset.u !== url) { k('qr').innerHTML = qrSvg(url); k('qr').dataset.u = url; }
@@ -302,77 +331,139 @@ function renderTicket(t) {
       li = el('li', 'item'); li.dataset.id = it.id; li.tabIndex = 0;
       li.setAttribute('role', 'checkbox');
       li.innerHTML = `<span class="code"></span><span class="txt"></span><span class="qty"></span><button class="del" type="button" aria-label="Borrar producto">${XSVG}</button>`;
-      if (!seen.has(it.id)) li.classList.add('new');
+      if (!seen.has(it.id)) { li.classList.add('new'); li.addEventListener('animationend', () => li.classList.remove('new'), { once: true }); }
       seen.add(it.id);
     }
     old.delete(it.id);
-    li.querySelector('.code').textContent = code(idx, it);
-    li.querySelector('.txt').textContent = it.text;
-    li.querySelector('.qty').textContent = 'x ' + (it.qty || 1);
-    li.classList.toggle('done', !!it.done);
-    li.setAttribute('aria-checked', !!it.done);
+    const set = (sel, v) => { const n = li.querySelector(sel); if (n.textContent !== v) n.textContent = v; };
+    set('.code', code(idx, it)); set('.txt', it.text); set('.qty', 'x ' + (it.qty || 1));
+    if (li.classList.contains('done') !== !!it.done) { li.classList.toggle('done', !!it.done); li.setAttribute('aria-checked', !!it.done); }
     li.querySelector('.del').hidden = mode() === 'ro';
-    ul.append(li); // mantiene el orden
+    if (ul.children[idx] !== li) ul.insertBefore(li, ul.children[idx] || null); // solo mueve si cambia el orden
   });
   old.forEach(li => li.remove());
 }
 
 /* ---------------- eventos del ticket ---------------- */
 $('#ticket').addEventListener('click', e => {
-  const li = e.target.closest('.item'); if (!li) return;
-  if (e.target.closest('.del')) { mutate(ops.delItem(current, li.dataset.id)); return; }
-  mutate(ops.setDone(current, li.dataset.id, !li.classList.contains('done')));
+  const li = e.target.closest('.item'); if (!li || li.dataset.swiped) return;
+  if (e.target.closest('.del')) { mutate('delItem', current, li.dataset.id); return; }
+  const v = !li.classList.contains('done');
+  buzz(v ? 12 : 6);
+  mutate('setDone', current, li.dataset.id, v);
 });
 $('#ticket').addEventListener('keydown', e => {
   const li = e.target.closest('.item'); if (!li || e.target !== li) return;
   if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); li.click(); }
-  if (e.key === 'Delete' || e.key === 'Backspace') mutate(ops.delItem(current, li.dataset.id));
+  if (e.key === 'Delete' || e.key === 'Backspace') mutate('delItem', current, li.dataset.id);
 });
+
+// Deslizar a la izquierda para borrar (móvil)
+{
+  let sx = 0, sy = 0, li = null, dx = 0, lock = null;
+  const tk = $('#ticket');
+  tk.addEventListener('touchstart', e => {
+    if (mode() === 'ro') return;
+    li = e.target.closest('.item'); if (!li) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; lock = null; delete li.dataset.swiped;
+  }, { passive: true });
+  tk.addEventListener('touchmove', e => {
+    if (!li) return;
+    const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
+    if (lock === null && (Math.abs(x) > 8 || Math.abs(y) > 8)) lock = Math.abs(x) > Math.abs(y) ? 'x' : 'y';
+    if (lock !== 'x') return;
+    dx = Math.min(0, x);
+    li.style.transform = `translateX(${dx}px)`;
+    li.classList.toggle('swipe-del', dx < -90);
+  }, { passive: true });
+  tk.addEventListener('touchend', () => {
+    if (!li) return;
+    const target = li; li = null;
+    if (lock === 'x') {
+      target.dataset.swiped = '1'; setTimeout(() => delete target.dataset.swiped, 350);
+      if (dx < -90) {
+        buzz(20);
+        target.style.transition = 'transform .2s, opacity .2s'; target.style.transform = 'translateX(-110%)'; target.style.opacity = '0';
+        setTimeout(() => mutate('delItem', current, target.dataset.id), 180);
+        return;
+      }
+    }
+    target.style.transition = 'transform .2s'; target.style.transform = '';
+    target.classList.remove('swipe-del');
+    setTimeout(() => { target.style.transition = ''; }, 220);
+  });
+}
 
 $('#addForm').addEventListener('submit', e => {
   e.preventDefault();
   const inp = $('#addInput'); const items = parseItems(inp.value);
   if (!items.length || !current) return;
-  mutate(ops.addItems(current, items));
-  inp.value = ''; inp.focus();
-  requestAnimationFrame(() => $('#ticket .items').lastElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+  mutate('addItems', current, items);
+  buzz(8);
+  inp.value = '';
+  if (!isMobile()) inp.focus();
+  requestAnimationFrame(() => $('#ticket .items').lastElementChild?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
 });
 
-$('#actions').addEventListener('click', async e => {
-  const b = e.target.closest('button'); if (!b) return;
-  const t = findT(view(), current); if (!t) return;
+function onAction(e) {
+  const b = e.target.closest('button[data-act]'); if (!b || b.disabled) return;
   const act = b.dataset.act;
+  if ($('#sheet').open) $('#sheet').close();
+  if (act === 'install') return doInstall();
+  if (act === 'settings') return openSettings();
+  if (act === 'new') return openTicketDlg(null);
+  const t = findT(view(), current); if (!t) return;
   if (act === 'download') downloadImage(t);
-  if (act === 'link') copy(ticketUrl(t));
+  if (act === 'link') shareLink(t);
   if (act === 'edit') openTicketDlg(t);
-  if (act === 'clear') { if (!t.items.some(i => i.done)) return toast('No hay productos tachados'); mutate(ops.clearDone(t.id)); toast('Tachados quitados'); }
-  if (act === 'delete' && confirm(`¿Eliminar el ticket «${t.name}»? No se puede deshacer.`)) { mutate(ops.delTicket(t.id)); toast('Ticket eliminado'); }
-});
+  if (act === 'clear') { if (!t.items.some(i => i.done)) return toast('No hay productos tachados'); mutate('clearDone', t.id); toast('Tachados quitados'); }
+  if (act === 'delete') askConfirm(`¿Eliminar «${t.name}»?`, 'Se borrará el ticket en todos tus dispositivos.', 'Eliminar', () => { mutate('delTicket', t.id); toast('Ticket eliminado'); });
+}
+$('#actions').addEventListener('click', onAction);
+$('#sheet').addEventListener('click', onAction);
+$('#moreBtn').onclick = () => {
+  const t = findT(view(), current), ro = mode() === 'ro';
+  $('#sheetTitle').textContent = t ? t.name : 'ByTicket';
+  $('#sheetSync').textContent = syncMsg || '';
+  $('#sheet').querySelectorAll('[data-need=ticket]').forEach(b => b.hidden = !t);
+  $('#sheet').querySelectorAll('[data-act=edit],[data-act=clear],[data-act=delete]').forEach(b => b.disabled = ro);
+  $('#sheet').querySelector('[data-act=install]').hidden = !canOfferInstall();
+  $('#sheet').showModal();
+};
 
 /* ---------------- diálogos ---------------- */
 document.querySelectorAll('dialog [data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
 let editing = null;
 function openTicketDlg(t) {
   editing = t ? t.id : null;
   const f = $('#ticketForm');
   $('#ticketDlgTitle').textContent = t ? 'Editar ticket' : 'Nuevo ticket';
   f.name.value = t?.name || ''; f.place.value = t?.place || ''; f.note.value = t?.note || '';
-  $('#ticketDlg').showModal(); f.name.focus();
+  $('#ticketDlg').showModal();
+  if (!isMobile()) f.name.focus();
 }
 $('#emptyNew').onclick = () => openTicketDlg(null);
 $('#ticketForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
   const data = { name: f.name.value.trim() || 'Ticket', place: f.place.value.trim(), note: f.note.value.trim() };
-  if (editing) mutate(ops.editTicket(editing, data));
+  if (editing) mutate('editTicket', editing, data);
   else {
     const t = { id: uid('t'), ...data, created: Date.now(), updated: Date.now(), items: [] };
     current = t.id; history.replaceState(null, '', '#' + t.id);
-    mutate(ops.addTicket(t));
-    setTimeout(() => $('#addInput').focus(), 50);
+    mutate('addTicket', t);
+    setTimeout(() => $('#addInput').focus(), 80);
   }
   $('#ticketDlg').close();
 });
+
+let confirmFn = null;
+function askConfirm(title, text, okLabel, fn) {
+  $('#confirmTitle').textContent = title; $('#confirmText').textContent = text; $('#confirmOk').textContent = okLabel;
+  confirmFn = fn; $('#confirmDlg').showModal();
+}
+$('#confirmForm').addEventListener('submit', e => { e.preventDefault(); $('#confirmDlg').close(); const f = confirmFn; confirmFn = null; f && f(); });
 
 function openSettings() {
   const f = $('#settingsForm');
@@ -381,7 +472,7 @@ function openSettings() {
   $('#settingsDlg').showModal();
 }
 $('#settingsBtn').onclick = openSettings;
-$('#syncBtn').onclick = () => { if (mode() === 'local') openSettings(); else { pull(false); toast(syncMsg || 'Sincronizando…'); } };
+$('#syncBtn').onclick = () => { if (mode() === 'local') openSettings(); else { pending.length ? flush() : pull(false); toast(syncMsg || 'Sincronizando…'); } };
 $('#forgetBtn').onclick = () => { $('#settingsForm').token.value = ''; };
 $('#settingsForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -393,34 +484,62 @@ $('#settingsForm').addEventListener('submit', async e => {
   msg.className = 'test'; msg.textContent = 'Conectando…';
   try {
     const res = await fetchRemote(false);
-    remote = res.doc; sha = res.sha; etag = res.etag; pending = []; loaded = true;
+    remote = res.doc; sha = res.sha; etag = res.etag; loaded = true; saveCache();
+    pending = LS.get(pendKey(), []);
     msg.className = 'test ok'; msg.textContent = mode() === 'rw' ? 'Conectado. Ya puedes editar desde este dispositivo.' : 'Conectado en modo solo lectura.';
-    if (wasLocal && localDoc.tickets.length && mode() === 'rw' && confirm(`¿Subir tus ${localDoc.tickets.length} ticket(s) de este dispositivo a GitHub?`)) {
-      localDoc.tickets.forEach(t => mutate(ops.addTicket(t)));
-    }
     setSync(mode() === 'rw' ? 'ok' : 'ro');
+    if (wasLocal && localDoc.tickets.length && mode() === 'rw') {
+      setTimeout(() => askConfirm(`¿Subir ${localDoc.tickets.length} ticket(s)?`, 'Tienes tickets guardados solo en este dispositivo. Se añadirán a tu GitHub.', 'Subir', () => localDoc.tickets.forEach(t => mutate('addTicket', t))), 950);
+    }
+    if (pending.length) flush();
     startPolling(); render();
     setTimeout(() => $('#settingsDlg').open && $('#settingsDlg').close(), 900);
   } catch (err) {
     msg.className = 'test err'; msg.textContent = err.message;
-    setSync('err', err.message);
+    setSync(err.offline ? 'off' : 'err', err.message);
   }
 });
 
 /* ---------------- estado de sincronización ---------------- */
 let syncMsg = '';
 function setSync(s, detail) {
-  const map = { ok: 'Sincronizado', busy: 'Guardando…', err: 'Error', ro: 'Solo lectura', local: 'Solo este dispositivo' };
+  const map = { ok: 'Sincronizado', busy: 'Guardando…', err: 'Error', ro: 'Solo lectura', local: 'Solo este dispositivo', off: 'Sin conexión' };
   const btn = $('#syncBtn');
   btn.dataset.s = s === 'local' ? '' : s;
   $('#syncText').textContent = map[s] || s;
-  syncMsg = detail || map[s];
+  syncMsg = detail || (s === 'off' ? 'Sin conexión: los cambios se guardan aquí y se subirán al volver' : map[s]);
   btn.title = syncMsg;
   const led = $('#led');
-  led.className = 'led' + (s === 'busy' ? ' busy' : s === 'err' || s === 'ro' ? ' off' : '');
-  $('#printerLabel').textContent = s === 'err' ? 'Sin conexión · reintentando' : s === 'ro' ? 'Solo lectura' : 'Añadir producto';
+  led.className = 'led' + (s === 'busy' ? ' busy' : s === 'err' || s === 'ro' || s === 'off' ? ' off' : '');
+  $('#printerLabel').textContent = s === 'err' ? 'Error · reintentando' : s === 'off' ? 'Sin conexión · se guarda aquí' : s === 'ro' ? 'Solo lectura' : 'Añadir producto';
   if (s === 'err' && detail) toast(detail);
 }
+
+/* ---------------- instalar como app ---------------- */
+let deferredPrompt = null;
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+const isAndroid = () => /android/i.test(navigator.userAgent);
+const canOfferInstall = () => !standalone() && (deferredPrompt || isIOS() || isAndroid());
+const installHintVisible = () => canOfferInstall() && matchMedia('(pointer:coarse)').matches && !LS.get('ts.noInstallHint', 0);
+function updateInstallBtn() { $('#installBtn').hidden = !canOfferInstall(); }
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; updateInstallBtn(); render(); });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; LS.set('ts.noInstallHint', 1); updateInstallBtn(); render(); toast('¡Instalada! Ya la tienes en tu pantalla de inicio'); });
+async function doInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const r = await deferredPrompt.userChoice.catch(() => null);
+    deferredPrompt = null; updateInstallBtn();
+    if (r && r.outcome === 'accepted') { LS.set('ts.noInstallHint', 1); render(); }
+    return;
+  }
+  const ios = isIOS();
+  $('#installIOS').hidden = !ios; $('#installAndroid').hidden = ios;
+  $('#installDlg').showModal();
+}
+$('#installBtn').onclick = doInstall;
+updateInstallBtn();
+setTimeout(() => { if (installHintVisible()) { LS.set('ts.noInstallHint', 1); toast('Puedes instalarla como app desde el menú ⋯'); } }, 2500);
 
 /* ---------------- utilidades ---------------- */
 let toastT;
@@ -435,6 +554,14 @@ async function copy(text) {
     try { document.execCommand('copy'); toast('Enlace copiado'); } catch { toast(text); }
     ta.remove();
   }
+}
+async function shareLink(t) {
+  const url = ticketUrl(t);
+  if (matchMedia('(pointer:coarse)').matches && navigator.share) {
+    try { await navigator.share({ title: t.name, text: 'Lista de la compra: ' + t.name, url }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  copy(url);
 }
 
 /* ---------------- imagen del ticket ---------------- */
@@ -483,7 +610,7 @@ function drawTicket(t, exactH) {
   const nameFont = sz => `850 ${sz}px "Archivo", system-ui, sans-serif`;
   do { nameLines = wrap((t.name || 'Ticket').toUpperCase(), nameFont(nameSize), inner - 60); nameSize -= 2; } while (nameLines.length > 1 && nameSize > 20);
   nameSize += 2;
-  const noteLines = wrap(t.note || 'Gracias por su visita. Escanea el código para abrir esta lista en cualquier dispositivo.', mono(400, 13.5), inner - 10);
+  const noteLines = wrap(t.note || 'Escanea el código para abrir esta lista en cualquier dispositivo.', mono(400, 13.5), inner - 10);
   const url = ticketUrl(t), urlLines = wrap(url.replace(/^https?:\/\//, ''), mono(400, 11), inner);
   const qr = qrMatrix(url), QR = 120;
 
@@ -572,6 +699,7 @@ function drawTicket(t, exactH) {
   return exactH ? c : drawTicket(t, Math.ceil(used));
 }
 
+
 /* ---------------- arranque ---------------- */
 function fromHash() {
   const id = location.hash.slice(1);
@@ -579,15 +707,37 @@ function fromHash() {
 }
 window.addEventListener('hashchange', fromHash);
 
+const want = location.hash.slice(1);
 if (mode() === 'local') {
   remote = LS.get('ts.local', emptyDoc());
   if (!Array.isArray(remote.tickets)) remote = emptyDoc();
   loaded = true; setSync('local'); render(); fromHash();
 } else {
-  setSync('busy'); $('#syncText').textContent = 'Cargando…'; render();
-  const want = location.hash.slice(1);
+  // Muestra al instante lo último guardado en el dispositivo y luego actualiza
+  const cached = LS.get(cacheKey(), null);
+  if (cached && cached.doc && Array.isArray(cached.doc.tickets)) { remote = cached.doc; sha = cached.sha || null; loaded = true; }
+  pending = LS.get(pendKey(), []);
+  if (!Array.isArray(pending)) pending = [];
+  setSync('busy'); $('#syncText').textContent = 'Cargando…';
+  render(); fromHash();
   pull(false).then(() => { if (want && findT(view(), want)) { current = want; render(); } });
   startPolling();
 }
-window.addEventListener('beforeunload', e => { if (pending.length && mode() === 'rw') { e.preventDefault(); e.returnValue = ''; } });
+// Acceso directo "Nuevo ticket" del icono de la app
+if (new URLSearchParams(location.search).has('nuevo') && mode() !== 'ro') {
+  history.replaceState(null, '', location.pathname + location.hash);
+  setTimeout(() => openTicketDlg(null), 300);
+}
+
+/* ---------------- service worker (app instalable y sin conexión) ---------------- */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      nw && nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) toast('Nueva versión disponible: cierra y vuelve a abrir la app');
+      });
+    });
+  }).catch(() => {});
+}
 }

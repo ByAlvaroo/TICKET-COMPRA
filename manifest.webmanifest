@@ -1,0 +1,23 @@
+{
+  "name": "ByTicket",
+  "short_name": "ByTicket",
+  "description": "Listas de la compra con forma de ticket, sincronizadas en todos tus dispositivos.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#dcd6da",
+  "theme_color": "#1d1b20",
+  "lang": "es",
+  "categories": ["productivity", "shopping", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Nuevo ticket", "short_name": "Nuevo", "url": "./?nuevo=1", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

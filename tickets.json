@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795796930603,
+   "updated": 1795796940168,
    "items": [
     {
      "id": "ijompbj33n",
@@ -30,6 +30,12 @@
     {
      "id": "i5k0r8hjec",
      "text": "Zumos",
+     "qty": 1,
+     "done": false
+    },
+    {
+     "id": "ixxbe0hqs0",
+     "text": "Papeles AIRFLY",
      "qty": 1,
      "done": false
     }

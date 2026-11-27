@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795799258642,
+   "updated": 1795799285857,
    "items": [
     {
      "id": "p65165",
@@ -18,6 +18,16 @@
      "cat": "9",
      "cn": "Azúcar, caramelos y chocolate",
      "t": "https://prod-mercadona.imgix.net/images/0b8b1fd18173544070ec5422c5f5c7bb.jpg?fit=crop&h=200&w=200"
+    },
+    {
+     "id": "p53141",
+     "pid": "53141",
+     "text": "Salchichas cocidas estilo Frankfurt Hacendado de pollo y cerdo sabor ahumado",
+     "qty": 1,
+     "done": false,
+     "cat": "4",
+     "cn": "Charcutería y quesos",
+     "t": "https://prod-mercadona.imgix.net/images/d3ca58a7c971dab07cb0095a4391f33b.jpg?fit=crop&h=200&w=200"
     }
    ],
    "store": "mercadona"

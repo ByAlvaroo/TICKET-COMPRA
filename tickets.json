@@ -7,30 +7,8 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795864907706,
+   "updated": 1795864909647,
    "items": [
-    {
-     "id": "p86656",
-     "pid": "86656",
-     "text": "Ajo granulado Hacendado",
-     "qty": 1,
-     "done": true,
-     "cat": "12",
-     "cn": "Aceite, especias y salsas",
-     "t": "https://prod-mercadona.imgix.net/images/10f7ce7fe35de8f5b595db38a95a9cc5.jpg?fit=crop&h=200&w=200",
-     "doneAt": 1795803445838
-    },
-    {
-     "id": "p33581",
-     "pid": "33581",
-     "text": "Cuquis Hacendado",
-     "qty": 2,
-     "done": true,
-     "cat": "15",
-     "cn": "Aperitivos",
-     "t": "https://prod-mercadona.imgix.net/images/8ea3248c4e2b51815ee1cf960b24c7d3.jpeg?fit=crop&h=200&w=200",
-     "doneAt": 1795803037637
-    },
     {
      "id": "p22910",
      "pid": "22910",

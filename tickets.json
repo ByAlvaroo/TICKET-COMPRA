@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795864895794,
+   "updated": 1795864901379,
    "items": [
     {
      "id": "p65165",
@@ -48,12 +48,11 @@
      "pid": "39130",
      "text": "Zumo de piña y uva Hacendado",
      "qty": 1,
-     "done": true,
+     "done": false,
      "cat": "10",
      "cn": "Zumos",
      "t": "https://prod-mercadona.imgix.net/images/ed323a439124a96f84da691c64cc48af.jpg?fit=crop&h=200&w=200",
-     "fav": false,
-     "doneAt": 1795802583493
+     "fav": false
     },
     {
      "id": "p33581",

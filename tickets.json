@@ -7,7 +7,7 @@
    "place": "MERCADONA",
    "note": "",
    "created": 1795796251672,
-   "updated": 1795864901379,
+   "updated": 1795864904002,
    "items": [
     {
      "id": "p65165",
@@ -44,17 +44,6 @@
      "doneAt": 1795803445838
     },
     {
-     "id": "p39130",
-     "pid": "39130",
-     "text": "Zumo de piña y uva Hacendado",
-     "qty": 1,
-     "done": false,
-     "cat": "10",
-     "cn": "Zumos",
-     "t": "https://prod-mercadona.imgix.net/images/ed323a439124a96f84da691c64cc48af.jpg?fit=crop&h=200&w=200",
-     "fav": false
-    },
-    {
      "id": "p33581",
      "pid": "33581",
      "text": "Cuquis Hacendado",
@@ -64,28 +53,6 @@
      "cn": "Aperitivos",
      "t": "https://prod-mercadona.imgix.net/images/8ea3248c4e2b51815ee1cf960b24c7d3.jpeg?fit=crop&h=200&w=200",
      "doneAt": 1795803037637
-    },
-    {
-     "id": "p11681",
-     "pid": "11681",
-     "text": "Molde de papel Bosque Verde para freidora de aire 20 cm",
-     "qty": 1,
-     "done": true,
-     "cat": "26",
-     "cn": "Limpieza y hogar",
-     "t": "https://prod-mercadona.imgix.net/images/179eb41ae05bae2a5c72e79923527467.jpg?fit=crop&h=200&w=200",
-     "doneAt": 1795802511125
-    },
-    {
-     "id": "p14969",
-     "pid": "14969",
-     "text": "Guantes de látex Bosque Verde talla pequeña-mediana",
-     "qty": 1,
-     "done": true,
-     "cat": "26",
-     "cn": "Limpieza y hogar",
-     "t": "https://prod-mercadona.imgix.net/images/171af63ee8eb16206886fcb9f824eea1.jpg?fit=crop&h=200&w=200",
-     "doneAt": 1795802479353
     },
     {
      "id": "p69706",
